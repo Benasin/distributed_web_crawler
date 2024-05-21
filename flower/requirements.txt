@@ -1,0 +1,7 @@
+celery
+redis
+requests
+beautifulsoup4
+sqlalchemy
+psycopg2-binary
+flower

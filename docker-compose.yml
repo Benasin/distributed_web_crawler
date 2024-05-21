@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  
+  flower:
+    build: 
+      context: flower
+    command: /start-flower
+    depends_on:
+      - redis
+      - db
+      - worker_1
+      - worker_2
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+  
+  redis:
+    image: redis:latest
+    command: redis-server --requirepass redis_password
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: newsdb
+      POSTGRES_USER: newsuser
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: app
+    depends_on:
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
+      - DATABASE_URL=postgresql://newsuser:password@db:5432/newsdb
+      - POSTGRES_USER=newsuser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=newsdb
+    ports:
+      - "5000:5000"
+
+
+  worker_1:
+    build:
+      context: worker_1
+    depends_on:
+      - app
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
+  
+  worker_2:
+    build:
+      context: worker_2
+    depends_on:
+      - app
+      - redis
+      - db
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
+
+volumes:
+  postgres_data:
