@@ -1,0 +1,9 @@
+celery
+redis
+requests
+beautifulsoup4
+sqlalchemy
+psycopg2-binary
+flower
+django_celery_beat
+flask

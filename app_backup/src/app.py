@@ -14,11 +14,6 @@ def get_db_connection():
     )
     return conn
 
-# Health check
-@app.route('/health')
-def health_check():
-    return {"result": "OK"}, 200
-
 # Route for the main page
 @app.route('/')
 def main_page():
@@ -31,4 +26,4 @@ def main_page():
     return render_template('index.html', news_rows=news_rows)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

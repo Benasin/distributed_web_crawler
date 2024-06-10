@@ -15,10 +15,10 @@ import psycopg2
 
 try:
     psycopg2.connect(
-        dbname="newsdb",
-        user="newsuser",
-        password="password",
-        host="db",
+        dbname="worker_newsdb_1",
+        user="worker_newsuser_1",
+        password="worker_password_1",
+        host="worker_db_1",
         port="5432",
     )
 except psycopg2.OperationalError:

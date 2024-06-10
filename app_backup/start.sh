@@ -37,7 +37,18 @@ worker_ready() {
     celery -A celery_config inspect ping
 }
 
-sleep 10
+sleep 30
+
+while true; do
+    if [ $(curl -s -o /dev/null -w "%{http_code}" http://app:5000/health) -eq 200 ]; then
+        echo "App is already running"
+        sleep 10
+        continue
+    else
+        echo "Server is crashed, starting the backup app"
+        break
+    fi
+done
 
 python run_crawler.py &
 python sync_database.py &

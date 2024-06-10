@@ -8,7 +8,7 @@ services:
     command: /start-flower
     depends_on:
       - redis
-      - db
+      - main_db
       - worker_1
       - worker_2
     ports:
@@ -22,33 +22,70 @@ services:
     ports:
       - "6379:6379"
 
-  db:
+  main_db:
     image: postgres:latest
     environment:
-      POSTGRES_DB: newsdb
-      POSTGRES_USER: newsuser
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: main_newsdb
+      POSTGRES_USER: main_newsuser
+      POSTGRES_PASSWORD: main_password
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - main_postgres_data:/var/lib/postgresql/data
+
+  worker_db_1:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: worker_newsdb_1
+      POSTGRES_USER: worker_newsuser_1
+      POSTGRES_PASSWORD: worker_password_1
+    ports:
+      - "5433:5432"
+    volumes:
+      - worker_postgres_data_1:/var/lib/postgresql/data
+
+  worker_db_2:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: worker_newsdb_2
+      POSTGRES_USER: worker_newsuser_2
+      POSTGRES_PASSWORD: worker_password_2
+    ports:
+      - "5434:5432"
+    volumes:
+      - worker_postgres_data_2:/var/lib/postgresql/data
 
   app:
     build:
       context: app
     depends_on:
       - redis
-      - db
+      - main_db
     environment:
       - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
-      - DATABASE_URL=postgresql://newsuser:password@db:5432/newsdb
+      - DATABASE_URL=postgresql://newsuser:password@main_db:5432/newsdb
       - POSTGRES_USER=newsuser
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=newsdb
     ports:
       - "5000:5000"
 
+  app_backup:
+    build:
+      context: app_backup
+    depends_on:
+      - redis
+      - main_db
+    environment:
+      - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
+      - DATABASE_URL=postgresql://newsuser:password@main_db:5432/newsdb
+      - POSTGRES_USER=newsuser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=newsdb
+    ports:
+      - "5001:5001"
 
   worker_1:
     build:
@@ -56,7 +93,7 @@ services:
     depends_on:
       - app
       - redis
-      - db
+      - main_db
     environment:
       - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
@@ -67,10 +104,12 @@ services:
     depends_on:
       - app
       - redis
-      - db
+      - main_db
     environment:
       - CELERY_BROKER_URL=redis://:redis_password@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:redis_password@redis:6379/0
 
 volumes:
-  postgres_data:
+  main_postgres_data:
+  worker_postgres_data_1:
+  worker_postgres_data_2:

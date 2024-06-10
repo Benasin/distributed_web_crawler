@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker # type: ignore
 
 Base = declarative_base()
-engine = create_engine('postgresql://newsuser:password@db:5432/newsdb')
+engine = create_engine('postgresql://main_newsuser:main_password@main_db:5432/main_newsdb')
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -19,28 +19,29 @@ class News(Base):
 
 Base.metadata.create_all(engine)
 
+def extract_link(title_element, site):
+  link = title_element.find('a')
+  if link is None:
+    link = title_element
+  link = link.get("href")
+  if link[0] == "/" or link[0] == ".":
+    link = site + link
+  return link
+
 @app.task
-def fetch_news(url, site):
+def fetch_news(url, site, title_tag, description_tag):
     try:
         response = requests.get(url)
         response.raise_for_status()
         page_content = response.content
         soup = BeautifulSoup(page_content, 'html.parser')
 
-        if site == 'vnexpress':
-            # Extract the news content based on HTML structure
-            title_elements = soup.find_all(class_='title-news')
-            links = [title.find('a').get('href') for title in title_elements]
-            titles = [title.get_text().strip() for title in title_elements]
-            description_elements = soup.find_all(class_='description')
-            descriptions = [description.get_text().strip() for description in description_elements]
-        elif site == 'kinhtedothi':
-            # Extract the news content based on HTML structure
-            title_elements = soup.find_all(class_='story__title')
-            links = ['https://kinhtedothi.vn' + title.find('a').get('href') for title in title_elements]
-            titles = [title.get_text().strip() for title in title_elements]
-            description_elements = soup.find_all(class_='story__summary')
-            descriptions = [description.get_text().strip() for description in description_elements]
+        # Extract the news content based on HTML structure
+        title_elements = soup.find_all(class_=title_tag)
+        links = [extract_link(title, site) for title in title_elements]
+        titles = [title.get_text().strip() for title in title_elements]
+        description_elements = soup.find_all(class_=description_tag)
+        descriptions = [description.get_text().strip() for description in description_elements]
 
         articles = [{'title': title, 'link': link, 'description': description} for title, link, description in zip(titles, links, descriptions)]
 
