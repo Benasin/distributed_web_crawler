@@ -1,6 +1,6 @@
 # Stock Market News Crawler
 
-## Team 
+## Team 8
 - Vương Thiệu	Luân	10421035@student.vgu.edu.vn
 - Trần Duy Khang	10421025@student.vgu.edu.vn
 - Phạm Trần Trường An 	10421001@student.vgu.edu.vn
